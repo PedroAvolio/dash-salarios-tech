@@ -43,28 +43,28 @@ class Main:
         # Limpeza das pastas
         self.clearFolder()
         
-        # # Selo Cubo
-        # self.read_data(self.returnReadDataPath("Selo Cubo Startups", "Selo Cubo 2023", "📝 Respostas Selo Cubo"))
-        # self.processData()
-        # self.write_data(self.returnWriteDataPath("Selo Cubo Startups", "Selo Cubo 2023", "📝 Respostas Selo Cubo"))
+        # Selo Cubo
+        self.read_data(self.returnReadDataPath("Selo Cubo Startups", "Selo Cubo 2023", "📝 Respostas Selo Cubo"))
+        self.processData()
+        self.write_data(self.returnWriteDataPath("Selo Cubo Startups", "Selo Cubo 2023", "📝 Respostas Selo Cubo"))
 
-        # # Companies
-        # self.read_data(self.returnReadDataPath("Selo Cubo Startups", "Corporates Ativas", "Grid view"))
-        # self.processCompaniesAndPartnersData()
-        # self.write_data(self.returnWriteDataPath("Selo Cubo Startups", "Corporates Ativas", "Grid view"))
+        # Companies
+        self.read_data(self.returnReadDataPath("Selo Cubo Startups", "Corporates Ativas", "Grid view"))
+        self.processCompaniesAndPartnersData()
+        self.write_data(self.returnWriteDataPath("Selo Cubo Startups", "Corporates Ativas", "Grid view"))
 
-        # # Parceiros
-        # self.read_data(self.returnReadDataPath("Selo Cubo Startups", "Parceiros Ativos", "Grid view"))
-        # self.processCompaniesAndPartnersData()
-        # self.write_data(self.returnWriteDataPath("Selo Cubo Startups", "Parceiros Ativos", "Grid view"))
+        # Parceiros
+        self.read_data(self.returnReadDataPath("Selo Cubo Startups", "Parceiros Ativos", "Grid view"))
+        self.processCompaniesAndPartnersData()
+        self.write_data(self.returnWriteDataPath("Selo Cubo Startups", "Parceiros Ativos", "Grid view"))
 
-        # # Startups
-        # self.read_data(self.returnReadDataPath("Selo Cubo Startups", "Startups Ativas", "Portfolio"))
-        # self.processCompaniesAndPartnersData()
-        # self.write_data(self.returnWriteDataPath("Selo Cubo Startups", "Startups Ativas", "Portfolio"))
+        # Startups
+        self.read_data(self.returnReadDataPath("Selo Cubo Startups", "Startups Ativas", "Portfolio"))
+        self.processCompaniesAndPartnersData()
+        self.write_data(self.returnWriteDataPath("Selo Cubo Startups", "Startups Ativas", "Portfolio"))
 
-        # # Create Latest
-        # self.createLatest()
+        # Create Latest
+        self.createLatest()
 
         self.job.commit()
 
