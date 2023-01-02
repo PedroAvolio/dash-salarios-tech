@@ -4,5 +4,5 @@
     "python.analysis.extraPaths": [
         "/home/glue_user/aws-glue-libs/PyGlue.zip:/home/glue_user/spark/python/lib/py4j-0.10.9-src.zip:/home/glue_user/spark/python/",
     ],
-    "notebook.output.textLineLimit": 300
+    "notebook.output.textLineLimit": 30
 }

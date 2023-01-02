@@ -39,46 +39,125 @@ class Main:
         self.job.init(jobname, args)
 
     def run(self):
-        # self.clearFolder()
-        self.read_data(self.returnReadDataPath("Selo Cubo Startups", "Selo Cubo 2023", "📝 Respostas Selo Cubo"))
-        self.processData()
-        # self.write_data(self.returnReadDataPath("Selo Cubo Startups", "Selo Cubo 2023", "📝 Respostas Selo Cubo"))
+
+        # Limpeza das pastas
+        self.clearFolder()
+        
+        # # Selo Cubo
+        # self.read_data(self.returnReadDataPath("Selo Cubo Startups", "Selo Cubo 2023", "📝 Respostas Selo Cubo"))
+        # self.processData()
+        # self.write_data(self.returnWriteDataPath("Selo Cubo Startups", "Selo Cubo 2023", "📝 Respostas Selo Cubo"))
+
+        # # Companies
+        # self.read_data(self.returnReadDataPath("Selo Cubo Startups", "Corporates Ativas", "Grid view"))
+        # self.processCompaniesAndPartnersData()
+        # self.write_data(self.returnWriteDataPath("Selo Cubo Startups", "Corporates Ativas", "Grid view"))
+
+        # # Parceiros
+        # self.read_data(self.returnReadDataPath("Selo Cubo Startups", "Parceiros Ativos", "Grid view"))
+        # self.processCompaniesAndPartnersData()
+        # self.write_data(self.returnWriteDataPath("Selo Cubo Startups", "Parceiros Ativos", "Grid view"))
+
+        # # Startups
+        # self.read_data(self.returnReadDataPath("Selo Cubo Startups", "Startups Ativas", "Portfolio"))
+        # self.processCompaniesAndPartnersData()
+        # self.write_data(self.returnWriteDataPath("Selo Cubo Startups", "Startups Ativas", "Portfolio"))
+
+        # # Create Latest
+        # self.createLatest()
+
         self.job.commit()
 
     def processData(self):
-        # self.dataframe.show()
-        self.dataframe = Map.apply(frame=self.dataframe, f=readMap)
-        self.dataframe = ApplyMapping.apply(frame=self.dataframe, mappings=[("`fields.Data de fundação`", "string", "data_fundacao", "string")])
-        self.dataframe.printSchema()
-        self.dataframe.show()
+        mapping = []
+        for item in self.dataframe.unnest().toDF().dtypes:
+            if item[0].split('.')[0] == "fields":
+                if len(item[0].split(".")) == 2:
+                    mapping.append((item[0], item[0].split('.')[1]))
+            else:
+                mapping.append((item[0], item[0].split('.')[0]))
 
+        self.dataframe = self.dataframe.apply_mapping(mapping).resolveChoice(specs=[
+            ("Faturamento 2022", "cast:decimal"),
+            ("Valor a captar / Faturamento previsto", "cast:decimal"),
+            ("Previsão do faturamento 2023", "cast:decimal"),
+            ("Captable", "cast:decimal"),
+            ("Faturamento 2021", "cast:decimal"),
+            ("Turnover", "cast:decimal"),
+            ("Δ Fat 21-22", "cast:decimal"),
+            ("Δ Clientes 21-22", "cast:decimal"),
+            ("Δ Fat 22-23", "cast:decimal"),
+            ("Δ Fat 21-23", "cast:decimal"),
+            ("Δ Fat 21-22/22-23", "cast:decimal"),
+            ("Δ Clientes 22-23", "cast:decimal"),
+            ("Δ Clientes 21-23", "cast:decimal"),
+            ("Δ Clientes 21-22/22-23", "cast:decimal"),
+            ("Δ Time 22-23", "cast:decimal"),
+            ("Δ Time 21-22/22-23", "cast:decimal"),
+            ("PERFORMANCE", "cast:decimal"),
+            ("CRESCIMENTO", "cast:decimal"),
+            ("INVESTIMENTO", "cast:decimal"),
+            ("PESSOAS", "cast:decimal"),
+            ("Δ Time 21-23", "cast:decimal"),
+            ("Δ Time 21-22", "cast:decimal"),
+            ("Δ Time 21-22/22-23", "cast:decimal")
+        ])
+
+    def processCompaniesAndPartnersData(self):
+        mapping = []
+        for item in self.dataframe.unnest().toDF().dtypes:
+            if item[0].split('.')[0] == "fields":
+                if len(item[0].split(".")) == 2:
+                    mapping.append((item[0], item[0].split('.')[1]))
+            else:
+                mapping.append((item[0], item[0].split('.')[0]))
+
+        self.dataframe = self.dataframe.apply_mapping(mapping)
 
     def clearFolder(self):
+        # Apago a data de processamento
+        paginator = self.s3client.get_paginator('list_objects_v2')
+        pages = paginator.paginate(Bucket=self.returnBucketName(), Prefix=self.partialNameProc() + self.findLastDate() + "/")
 
-        response = self.s3client.list_objects_v2(Bucket=self.returnBucketName(), Prefix=self.partialNameProc() + self.findLastDate() + "/")
-        files_in_folder = []
+        files_to_delete = []
+        for page in pages:
+            if "Contents" in page:
+                for obj in page['Contents']:
+                    files_to_delete.append({"Key": obj["Key"]})
+                    if len(files_to_delete) >= 800:
+                        self.s3client.delete_objects(
+                            Bucket=self.returnBucketName(), Delete={"Objects": files_to_delete}
+                        )
+                        files_to_delete = []
 
-        if "Contents" in response:
-            files_to_delete = []
-            files_in_folder = response["Contents"]
+        if len(files_to_delete) > 0:
+            self.s3client.delete_objects(
+                Bucket=self.returnBucketName(), Delete={"Objects": files_to_delete}
+            )
+            
 
-            for f in files_in_folder:
-                files_to_delete.append({"Key": f["Key"]})
+        # Apaga o recente
+        paginator = self.s3client.get_paginator('list_objects_v2')
+        pages = paginator.paginate(Bucket=self.returnBucketName(), Prefix=self.partialNameProc() + "latest" + "/")
 
-        response = self.s3client.list_objects_v2(Bucket=self.returnBucketName(), Prefix=self.partialNameProc() + "latest" + "/")
-        if "Contents" in response:
-            files_to_delete = []
-            files_in_folder = response["Contents"]
+        files_to_delete = []
+        for page in pages:
+            if "Contents" in page:
+                for obj in page['Contents']:
+                    if len(files_to_delete) <= 800:
+                        files_to_delete.append({"Key": obj["Key"]})
+                        if len(files_to_delete) >= 800:
+                            self.s3client.delete_objects(
+                                Bucket=self.returnBucketName(), Delete={"Objects": files_to_delete}
+                            )
+                            files_to_delete = []
 
-            for f in files_in_folder:
-                files_to_delete.append({"Key": f["Key"]})
-
-            response = self.s3client.delete_objects(
+        if len(files_to_delete) > 0:
+            self.s3client.delete_objects(
                 Bucket=self.returnBucketName(), Delete={"Objects": files_to_delete}
             )
 
     def createLatest(self):
-
         # Origem
         response = self.s3client.list_objects_v2(Bucket=self.returnBucketName(), Prefix=self.partialNameProc() + self.findLastDate() + "/")
         files_in_folder = []

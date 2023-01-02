@@ -15,6 +15,8 @@
 * chmod +x startup.sh
 
 ## Informações Adicionais
+* DataType
+  * https://docs.aws.amazon.com/databrew/latest/dg/datatypes.html
 * Bibliotecas já inclusas no Glue 3
   * https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-python-libraries.html
 * Criar biblioteca Wheel
