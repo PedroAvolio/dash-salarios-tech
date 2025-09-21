@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  glue-local:
+    image: amazon/aws-glue-libs:glue_libs_4.0.0_image_01
+    ports:
+      - "8888:8888"
+      - "4040:4040"
+    volumes:
+      - ~/.aws:/home/glue_user/.aws:ro
+    environment:
+      AWS_PROFILE: cubo-network
+    command: /home/glue_user/jupyter/jupyter_start.sh
