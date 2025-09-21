@@ -8,6 +8,3 @@ docker compose -f docker-compose-glue-local.yml up
 ## instalar o psycopg2
 pip install psycopg2-binary
 
-# dash-salarios-tech
-# dash-salarios-tech
-# dash-salarios-tech
