@@ -21,7 +21,7 @@ def load_data(url: str) -> pd.DataFrame:
         df_[c] = df_[c].astype(str)
     return df_.dropna(subset=["usd"])
 
-URL = "https://raw.githubusercontent.com/vqrca/dashboard_salarios_dados/main/dados-imersao-final.csv"
+URL = "https://raw.githubusercontent.com/PedroAvolio/dash-salarios-tech/refs/heads/main/dados-imersao-final.csv"
 df = load_data(URL)
 
 # ── Barra lateral (filtros) ────────────────────────────────────────────────────
@@ -87,8 +87,7 @@ sufixo_moeda = moeda
 st.title("🎲 Dashboard de Análise de Salários na Área de Dados")
 st.markdown("Explore os dados salariais nos últimos anos. Use os filtros ao lado para refinar.")
 
-# ── KPIs (apenas 4 cards) ──────────────────────────────────────────────────────
-st.subheader(f"Métricas gerais (salário anual em {sufixo_moeda})")
+# ── KPIs ──────────────────────────────────────────────────────────────────────
 if df_filtrado.empty:
     st.warning("Nenhum dado com os filtros atuais.")
     st.stop()
@@ -107,12 +106,12 @@ c4.metric("Cargo mais frequente", cargo_mais_freq)
 st.markdown("---")
 
 # ── Abas ───────────────────────────────────────────────────────────────────────
-aba1, aba2, aba3, aba4 = st.tabs(["📈 Visão Geral", "📊 Distribuições", "🗺️ Geografia", "🧾 Detalhes"])
+aba1, aba2, aba3, aba4 = st.tabs(["📈 Visão Geral", "📊 Distribuições", "🗺️ Trabalho", "🧾 Dados"])
 
 with aba1:
     col1, col2 = st.columns(2)
 
-    # Top 10 cargos por média salarial (valores DENTRO, preto)
+    # Top 10 cargos por média salarial
     top_cargos = (
         df_filtrado.groupby("cargo", as_index=False)["valor"].mean()
         .nlargest(10, "valor")
@@ -124,59 +123,26 @@ with aba1:
         title=f"Top 10 cargos por salário médio ({sufixo_moeda})",
         labels={"valor": f"Média anual ({sufixo_moeda})", "cargo": ""}
     )
-    fig1.update_traces(
-        texttemplate='%{x:,.0f}',
-        textposition='inside',
-        insidetextfont_color='black',
-        textfont_size=12
-    )
-    fig1.update_layout(
-        title_x=0.1,
-        yaxis={"categoryorder": "total ascending"},
-        xaxis=dict(showticklabels=False)
-    )
     col1.plotly_chart(fig1, use_container_width=True)
 
-    # Mediana por ano e senioridade (mantida, pois é gráfico analítico)
+    # Mediana por ano e senioridade
     mediana_ano_senior = (
         df_filtrado.groupby(["ano", "senioridade"], as_index=False)["valor"].median()
     )
     fig2 = px.line(
         mediana_ano_senior, x="ano", y="valor", color="senioridade",
         markers=True, title=f"Mediana salarial por ano e senioridade ({sufixo_moeda})",
-        labels={"valor": f"Mediana ({sufixo_moeda})", "ano": "Ano", "senioridade": "Senioridade"}
     )
-    fig2.update_traces(mode="lines+markers+text",
-                       texttemplate='%{y:,.0f}',
-                       textposition="top center")
-    fig2.update_layout(title_x=0.1, yaxis=dict(showticklabels=False))
     col2.plotly_chart(fig2, use_container_width=True)
 
 with aba2:
     col3, col4 = st.columns(2)
 
-    # Histograma com espaço entre barras + valores FORA (branco)
+    # Histograma
     nb = st.slider("Nº de bins do histograma", 10, 80, 30, 5)
     fig3 = px.histogram(
         df_filtrado, x="valor", nbins=nb,
-        title=f"Distribuição de salários anuais ({sufixo_moeda})",
-        labels={"valor": f"Faixa salarial ({sufixo_moeda})"}
-    )
-    fig3.update_traces(
-        texttemplate='%{y:,}',
-        textposition='outside',
-        textfont_color='white',
-        marker_line_width=1,
-        marker_line_color="white",
-        cliponaxis=False
-    )
-    fig3.update_layout(
-        title_x=0.1,
-        bargap=0.2,
-        yaxis=dict(showticklabels=False),
-        uniformtext_minsize=10,
-        uniformtext_mode='show',
-        margin=dict(t=90)
+        title=f"Distribuição de salários anuais ({sufixo_moeda})"
     )
     col3.plotly_chart(fig3, use_container_width=True)
 
@@ -184,9 +150,7 @@ with aba2:
     fig4 = px.box(
         df_filtrado, x="senioridade", y="valor", points="outliers",
         title=f"Distribuição por senioridade ({sufixo_moeda})",
-        labels={"valor": f"Salário ({sufixo_moeda})", "senioridade": "Senioridade"}
     )
-    fig4.update_layout(title_x=0.1, yaxis=dict(showticklabels=False))
     col4.plotly_chart(fig4, use_container_width=True)
 
 with aba3:
@@ -199,11 +163,9 @@ with aba3:
         remoto_contagem, names="tipo_trabalho", values="quantidade",
         title="Proporção dos tipos de trabalho", hole=0.5
     )
-    fig5.update_traces(textinfo="percent+label")
-    fig5.update_layout(title_x=0.1)
     col5.plotly_chart(fig5, use_container_width=True)
 
-    # Mapa: Cientista de Dados (média por país)
+    # Mapa (apenas Data Scientist, se disponível)
     df_ds = df_filtrado[df_filtrado["cargo"].str.lower() == "data scientist"]
     if not df_ds.empty and "residencia_iso3" in df_ds.columns:
         media_ds_pais = df_ds.groupby("residencia_iso3", as_index=False)["valor"].mean()
@@ -212,13 +174,11 @@ with aba3:
             locations="residencia_iso3",
             color="valor",
             color_continuous_scale="RdYlGn",
-            title=f"Salário médio de Cientista de Dados por país ({sufixo_moeda})",
-            labels={"valor": f"Média ({sufixo_moeda})", "residencia_iso3": "País"},
+            title=f"Salário médio de Data Scientist por país ({sufixo_moeda})",
         )
-        fig6.update_layout(title_x=0.1)
         col6.plotly_chart(fig6, use_container_width=True)
     else:
-        col6.info("Sem dados suficientes de **Data Scientist** para o mapa com os filtros atuais.")
+        col6.info("Sem dados suficientes de **Data Scientist** para o mapa.")
 
 with aba4:
     st.subheader("Dados Detalhados (filtrados)")
@@ -234,6 +194,3 @@ with aba4:
         file_name="salarios_filtrado.csv",
         mime="text/csv"
     )
-
-st.markdown("---")
-st.caption("Valores em USD ou BRL (conversão definida no painel). Rótulos: barras (dentro) e histograma (fora).")
